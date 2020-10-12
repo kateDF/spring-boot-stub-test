@@ -7,16 +7,17 @@ public class Account {
 
     private Long id;
     private String fullName;
-    private LocalDate registrationDate;
+    private LocalDate registrationDate = LocalDate.now();
     private Balance balance;
     private List<Transaction> transactions;
+
+    public Account() {
+    }
 
     public Account(Long id, String fullName, List<Transaction> transactions) {
         this.id = id;
         this.fullName = fullName;
         this.transactions = transactions;
-        this.registrationDate = LocalDate.now();
-        this.balance = new Balance(transactions);
     }
 
     public Account(Long id, String fullName) {
@@ -63,6 +64,7 @@ public class Account {
 
     public void setTransactions(List<Transaction> transactions) {
         this.transactions = transactions;
+        this.balance = new Balance(transactions);
     }
 
     @Override

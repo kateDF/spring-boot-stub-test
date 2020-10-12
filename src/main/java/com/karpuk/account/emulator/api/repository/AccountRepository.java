@@ -24,7 +24,7 @@ public class AccountRepository {
         )));
         accounts.put(10002L, new Account(10002L, "Nick Woods", Arrays.asList(
                 new Transaction("Grocery", 88.12),
-                new Transaction("Travel", 586.1)
+                new Transaction("Travel", -586.1)
         )));
     }
 
@@ -37,6 +37,15 @@ public class AccountRepository {
             return accounts.get(id);
         } else {
             throw new IllegalArgumentException("No account found with " + id + " id");
+        }
+    }
+
+    public Account addAccount(Account account) {
+        if (!accounts.containsKey(account.getId())) {
+            accounts.put(account.getId(), account);
+            return account;
+        } else {
+            throw new IllegalArgumentException("User with " + account.getId() + " id has already exists.");
         }
     }
 
