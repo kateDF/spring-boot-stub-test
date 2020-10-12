@@ -21,9 +21,9 @@ public class AccountMapper {
         apiAccount.setId(dbAccount.getId());
         apiAccount.setFullName(dbAccount.getFullName());
         apiAccount.setRegistrationDate(dbAccount.getRegistrationDate());
-        double usdAmount = getTransactionsAmount(dbAccount.getDbTransactions());
-        apiAccount.setApiBalance(new ApiBalance(usdAmount, usdAmount * EURO_EXCHANGE_RATE));
-        apiAccount.setApiTransactions(mapToApiTransaction(dbAccount.getDbTransactions()));
+        double usdAmount = getTransactionsAmount(dbAccount.getTransactions());
+        apiAccount.setBalance(new ApiBalance(usdAmount, usdAmount * EURO_EXCHANGE_RATE));
+        apiAccount.setTransactions(mapToApiTransaction(dbAccount.getTransactions()));
         return apiAccount;
     }
 
@@ -36,7 +36,7 @@ public class AccountMapper {
         } else {
             dbAccount.setRegistrationDate(LocalDate.now());
         }
-        dbAccount.setDbTransactions(mapToDbTransaction(apiAccount.getApiTransactions()));
+        dbAccount.setTransactions(mapToDbTransaction(apiAccount.getTransactions()));
         return dbAccount;
     }
 

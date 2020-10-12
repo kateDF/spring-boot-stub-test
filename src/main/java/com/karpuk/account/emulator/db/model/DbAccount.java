@@ -8,16 +8,16 @@ public class DbAccount {
     private Long id;
     private String fullName;
     private LocalDate registrationDate = LocalDate.now();
-    private List<DbTransaction> dbTransactions;
+    private List<DbTransaction> transactions;
 
     public DbAccount() {
     }
 
-    public DbAccount(Long id, String fullName, LocalDate registrationDate, List<DbTransaction> dbTransactions) {
+    public DbAccount(Long id, String fullName, LocalDate registrationDate, List<DbTransaction> transactions) {
         this.id = id;
         this.fullName = fullName;
         this.registrationDate = registrationDate;
-        this.dbTransactions = dbTransactions;
+        this.transactions = transactions;
     }
 
     public Long getId() {
@@ -44,12 +44,12 @@ public class DbAccount {
         this.registrationDate = registrationDate;
     }
 
-    public List<DbTransaction> getDbTransactions() {
-        return dbTransactions;
+    public List<DbTransaction> getTransactions() {
+        return transactions;
     }
 
-    public void setDbTransactions(List<DbTransaction> dbTransactions) {
-        this.dbTransactions = dbTransactions;
+    public void setTransactions(List<DbTransaction> transactions) {
+        this.transactions = transactions;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class DbAccount {
         if (fullName != null ? !fullName.equals(dbAccount.fullName) : dbAccount.fullName != null) return false;
         if (registrationDate != null ? !registrationDate.equals(dbAccount.registrationDate) : dbAccount.registrationDate != null)
             return false;
-        return dbTransactions != null ? dbTransactions.equals(dbAccount.dbTransactions) : dbAccount.dbTransactions == null;
+        return transactions != null ? transactions.equals(dbAccount.transactions) : dbAccount.transactions == null;
     }
 
     @Override
@@ -71,7 +71,7 @@ public class DbAccount {
         int result = id != null ? id.hashCode() : 0;
         result = 31 * result + (fullName != null ? fullName.hashCode() : 0);
         result = 31 * result + (registrationDate != null ? registrationDate.hashCode() : 0);
-        result = 31 * result + (dbTransactions != null ? dbTransactions.hashCode() : 0);
+        result = 31 * result + (transactions != null ? transactions.hashCode() : 0);
         return result;
     }
 
@@ -81,7 +81,7 @@ public class DbAccount {
                 "id=" + id +
                 ", fullName='" + fullName + '\'' +
                 ", registrationDate=" + registrationDate +
-                ", dbTransactions=" + dbTransactions +
+                ", dbTransactions=" + transactions +
                 '}';
     }
 

@@ -8,18 +8,18 @@ public class ApiAccount {
     private Long id;
     private String fullName;
     private LocalDate registrationDate = LocalDate.now();
-    private ApiBalance apiBalance;
-    private List<ApiTransaction> apiTransactions;
+    private ApiBalance balance;
+    private List<ApiTransaction> transactions;
 
     public ApiAccount() {
     }
 
-    public ApiAccount(Long id, String fullName, LocalDate registrationDate, ApiBalance apiBalance, List<ApiTransaction> apiTransactions) {
+    public ApiAccount(Long id, String fullName, LocalDate registrationDate, ApiBalance balance, List<ApiTransaction> transactions) {
         this.id = id;
         this.fullName = fullName;
         this.registrationDate = registrationDate;
-        this.apiBalance = apiBalance;
-        this.apiTransactions = apiTransactions;
+        this.balance = balance;
+        this.transactions = transactions;
     }
 
     public Long getId() {
@@ -46,19 +46,19 @@ public class ApiAccount {
         this.registrationDate = registrationDate;
     }
 
-    public ApiBalance getApiBalance() {
-        return apiBalance;
+    public ApiBalance getBalance() {
+        return balance;
     }
 
-    public void setApiBalance(ApiBalance apiBalance) {
-        this.apiBalance = apiBalance;
+    public void setBalance(ApiBalance balance) {
+        this.balance = balance;
     }
 
-    public List<ApiTransaction> getApiTransactions() {
-        return apiTransactions;
+    public List<ApiTransaction> getTransactions() {
+        return transactions;
     }
 
-    public void setApiTransactions(List<ApiTransaction> apiTransactions) {
-        this.apiTransactions = apiTransactions;
+    public void setTransactions(List<ApiTransaction> transactions) {
+        this.transactions = transactions;
     }
 }
