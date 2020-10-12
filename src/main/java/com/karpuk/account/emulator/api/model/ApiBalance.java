@@ -1,44 +1,25 @@
 package com.karpuk.account.emulator.api.model;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-public class Balance {
-
-    private static double EURO_EXCHANGE_RATE = 0.85;
+public class ApiBalance {
 
     private double usdBalance;
     private double euroBalance;
 
-    public Balance(List<Transaction> transactions) {
-        this.usdBalance = transactions.stream()
-                .filter(Objects::nonNull)
-                .map(Transaction::getAmount)
-                .collect(Collectors.summingDouble(Double::doubleValue));
-        this.euroBalance = usdBalance * EURO_EXCHANGE_RATE;
-    }
-
-
-    public Balance(double usdBalance) {
+    public ApiBalance(double usdBalance, double euroBalance) {
         this.usdBalance = usdBalance;
-        this.euroBalance = usdBalance * EURO_EXCHANGE_RATE;
+        this.euroBalance = euroBalance;
     }
 
     public double getUsdBalance() {
         return usdBalance;
     }
 
-    public double getEuroBalance() {
-        return euroBalance;
-    }
-
-    public static double getEuroExchangeRate() {
-        return EURO_EXCHANGE_RATE;
-    }
-
     public void setUsdBalance(double usdBalance) {
         this.usdBalance = usdBalance;
+    }
+
+    public double getEuroBalance() {
+        return euroBalance;
     }
 
     @Override
@@ -46,10 +27,10 @@ public class Balance {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Balance balance = (Balance) o;
+        ApiBalance apiBalance = (ApiBalance) o;
 
-        if (Double.compare(balance.usdBalance, usdBalance) != 0) return false;
-        return Double.compare(balance.euroBalance, euroBalance) == 0;
+        if (Double.compare(apiBalance.usdBalance, usdBalance) != 0) return false;
+        return Double.compare(apiBalance.euroBalance, euroBalance) == 0;
     }
 
     @Override

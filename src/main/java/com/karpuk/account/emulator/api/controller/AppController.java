@@ -1,27 +1,23 @@
 package com.karpuk.account.emulator.api.controller;
 
-import com.karpuk.account.emulator.api.model.Account;
-import com.karpuk.account.emulator.api.repository.AccountRepository;
+import com.karpuk.account.emulator.api.model.ApiAccount;
+import com.karpuk.account.emulator.db.repository.DbAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @EnableAutoConfiguration
 public class AppController {
 
     @Autowired
-    private AccountRepository accountRepository;
+    private DbAccountRepository accountRepository;
 
     @GetMapping("/accounts/{id}")
-    public Account getAccountById(@PathVariable("id") Long id) {
-        return accountRepository.findAccountById(id);
+    public ApiAccount getAccountById(@PathVariable("id") Long id) {
+        return null;
     }
-
-    @PostMapping("/accounts")
-    public Account createAccount(@RequestBody Account account) {
-        return accountRepository.addAccount(account);
-    }
-
 
 }

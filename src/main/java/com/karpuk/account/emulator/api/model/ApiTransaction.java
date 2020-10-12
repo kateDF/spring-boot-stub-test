@@ -1,21 +1,17 @@
 package com.karpuk.account.emulator.api.model;
 
-public class Transaction {
+public class ApiTransaction {
 
     private String type;
     private double amount;
 
-    public Transaction(String type, double amount) {
+    public ApiTransaction(String type, double amount) {
         this.type = type;
         this.amount = amount;
     }
 
     public String getType() {
         return type;
-    }
-
-    public double getAmount() {
-        return amount;
     }
 
     public void setType(String type) {
@@ -26,12 +22,16 @@ public class Transaction {
         this.amount = amount;
     }
 
+    public double getAmount() {
+        return amount;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        Transaction that = (Transaction) o;
+        ApiTransaction that = (ApiTransaction) o;
 
         if (Double.compare(that.amount, amount) != 0) return false;
         return type != null ? type.equals(that.type) : that.type == null;
