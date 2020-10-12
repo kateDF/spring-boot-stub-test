@@ -21,9 +21,9 @@ public class AccountMapper {
         apiAccount.setId(dbAccount.getId());
         apiAccount.setFullName(dbAccount.getFullName());
         apiAccount.setRegistrationDate(dbAccount.getRegistrationDate());
-        double usdAmount = getTransactionsAmount(dbAccount.getTransactions());
+        double usdAmount = calculateBalance(dbAccount.getTransactions());
         apiAccount.setBalance(new ApiBalance(usdAmount, usdAmount * EURO_EXCHANGE_RATE));
-        apiAccount.setTransactions(mapToApiTransaction(dbAccount.getTransactions()));
+        apiAccount.setTransactions(mapToApiTransactions(dbAccount.getTransactions()));
         return apiAccount;
     }
 
@@ -40,7 +40,10 @@ public class AccountMapper {
         return dbAccount;
     }
 
-    private static List<ApiTransaction> mapToApiTransaction(List<DbTransaction> dbTransactions) {
+    private static List<ApiTransaction> mapToApiTransactions(List<DbTransaction> dbTransactions) {
+        if (dbTransactions == null) {
+            return null;
+        }
         List<ApiTransaction> apiTransactions = new ArrayList<>();
         for (DbTransaction dbTransaction : dbTransactions) {
             apiTransactions.add(new ApiTransaction(dbTransaction.getType(), dbTransaction.getAmount()));
@@ -56,7 +59,7 @@ public class AccountMapper {
         return dbTransactions;
     }
 
-    private static double getTransactionsAmount(List<DbTransaction> dbTransactions) {
+    private static double calculateBalance(List<DbTransaction> dbTransactions) {
         return dbTransactions.stream()
                 .filter(Objects::nonNull)
                 .map(DbTransaction::getAmount)
