@@ -5,6 +5,7 @@ import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
 import com.karpuk.account.emulator.db.model.DbAccount;
 import com.karpuk.account.emulator.db.model.DbTransaction;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -12,22 +13,24 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Service
 public class AccountMapper {
 
-    private static double EURO_EXCHANGE_RATE = 0.85;
+    public AccountMapper() {
+    }
 
-    public static ApiAccount mapToApiAccount(DbAccount dbAccount) {
+    public ApiAccount mapToApiAccount(DbAccount dbAccount, double euroExchangeRate) {
         ApiAccount apiAccount = new ApiAccount();
         apiAccount.setId(dbAccount.getId());
         apiAccount.setFullName(dbAccount.getFullName());
         apiAccount.setRegistrationDate(dbAccount.getRegistrationDate());
         double usdAmount = calculateBalance(dbAccount.getTransactions());
-        apiAccount.setBalance(new ApiBalance(usdAmount, usdAmount * EURO_EXCHANGE_RATE));
+        apiAccount.setBalance(new ApiBalance(usdAmount, usdAmount * euroExchangeRate));
         apiAccount.setTransactions(mapToApiTransactions(dbAccount.getTransactions()));
         return apiAccount;
     }
 
-    public static DbAccount mapToDbAccount(ApiAccount apiAccount) {
+    public DbAccount mapToDbAccount(ApiAccount apiAccount) {
         DbAccount dbAccount = new DbAccount();
         dbAccount.setId(apiAccount.getId());
         dbAccount.setFullName(apiAccount.getFullName());
@@ -40,7 +43,7 @@ public class AccountMapper {
         return dbAccount;
     }
 
-    private static List<ApiTransaction> mapToApiTransactions(List<DbTransaction> dbTransactions) {
+    private List<ApiTransaction> mapToApiTransactions(List<DbTransaction> dbTransactions) {
         if (dbTransactions == null) {
             return null;
         }
@@ -51,7 +54,7 @@ public class AccountMapper {
         return apiTransactions;
     }
 
-    private static List<DbTransaction> mapToDbTransaction(List<ApiTransaction> apiTransactions) {
+    private List<DbTransaction> mapToDbTransaction(List<ApiTransaction> apiTransactions) {
         List<DbTransaction> dbTransactions = new ArrayList<>();
         for (ApiTransaction apiTransaction : apiTransactions) {
             dbTransactions.add(new DbTransaction(apiTransaction.getType(), apiTransaction.getAmount()));
@@ -59,7 +62,10 @@ public class AccountMapper {
         return dbTransactions;
     }
 
-    private static double calculateBalance(List<DbTransaction> dbTransactions) {
+    private double calculateBalance(List<DbTransaction> dbTransactions) {
+        if (dbTransactions == null || dbTransactions.isEmpty()) {
+            return 0;
+        }
         return dbTransactions.stream()
                 .filter(Objects::nonNull)
                 .map(DbTransaction::getAmount)

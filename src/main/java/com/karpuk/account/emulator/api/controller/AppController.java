@@ -14,27 +14,32 @@ import java.util.List;
 @EnableAutoConfiguration
 public class AppController {
 
+    private static double EURO_EXCHANGE_RATE = 0.85;
+
     @Autowired
     private DbAccountRepository accountRepository;
+    @Autowired
+    private AccountMapper accountMapper;
 
     @GetMapping("/accounts/{id}")
     public ApiAccount getAccountById(@PathVariable("id") Long id) {
         DbAccount dbAccount = accountRepository.findAccountById(id);
-        return AccountMapper.mapToApiAccount(dbAccount);
+        return accountMapper.mapToApiAccount(dbAccount, EURO_EXCHANGE_RATE);
     }
 
     @GetMapping("/accounts")
     public List<ApiAccount> getAccountsRepository() {
         List<ApiAccount> apiAccounts = new ArrayList<>();
         for (DbAccount dbAccount : accountRepository.getAccounts().values()) {
-            apiAccounts.add(AccountMapper.mapToApiAccount(dbAccount));
+            apiAccounts.add(accountMapper.mapToApiAccount(dbAccount, EURO_EXCHANGE_RATE));
         }
         return apiAccounts;
     }
 
     @PostMapping("/accounts")
     private ApiAccount createAccount(@RequestBody DbAccount dbAccount){
-        return AccountMapper.mapToApiAccount(accountRepository.addAccount(dbAccount));
+        DbAccount createdAccount = accountRepository.addAccount(dbAccount);
+        return accountMapper.mapToApiAccount(createdAccount, EURO_EXCHANGE_RATE);
     }
 
 }
