@@ -1,7 +1,9 @@
 package com.karpuk.account.emulator.api.controller;
 
 import com.karpuk.account.emulator.api.model.ApiAccount;
+import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.db.model.DbAccount;
+import com.karpuk.account.emulator.db.model.DbTransaction;
 import com.karpuk.account.emulator.db.repository.DbAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -37,9 +39,18 @@ public class AppController {
     }
 
     @PostMapping("/accounts")
-    private ApiAccount createAccount(@RequestBody DbAccount dbAccount){
+    private ApiAccount createAccount(@RequestBody DbAccount dbAccount) {
         DbAccount createdAccount = accountRepository.addAccount(dbAccount);
         return accountMapper.mapToApiAccount(createdAccount, EURO_EXCHANGE_RATE);
+    }
+
+    @PostMapping("/accounts/{id}/transactions")
+    private ApiBalance addTransaction(@RequestBody DbTransaction transaction, @PathVariable("id") Long id) {
+        DbAccount account = accountRepository.findAccountById(id);
+        account.addTransaction(transaction);
+        //TODO execute update db record
+        ApiAccount apiAccount = accountMapper.mapToApiAccount(account, EURO_EXCHANGE_RATE);
+        return apiAccount.getBalance();
     }
 
 }

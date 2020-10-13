@@ -52,6 +52,11 @@ public class DbAccount {
         this.transactions = transactions;
     }
 
+
+    public void addTransaction(DbTransaction newTransaction) {
+        transactions.add(newTransaction);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
