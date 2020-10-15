@@ -5,6 +5,9 @@ public class ApiTransaction {
     private String type;
     private double amount;
 
+    public ApiTransaction() {
+    }
+
     public ApiTransaction(String type, double amount) {
         this.type = type;
         this.amount = amount;

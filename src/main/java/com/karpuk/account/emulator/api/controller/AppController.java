@@ -2,6 +2,7 @@ package com.karpuk.account.emulator.api.controller;
 
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
+import com.karpuk.account.emulator.api.model.ApiTransaction;
 import com.karpuk.account.emulator.db.model.DbAccount;
 import com.karpuk.account.emulator.db.model.DbTransaction;
 import com.karpuk.account.emulator.db.repository.DbAccountRepository;
@@ -30,7 +31,7 @@ public class AppController {
     }
 
     @GetMapping("/accounts")
-    public List<ApiAccount> getAccountsRepository() {
+    public List<ApiAccount> getAccounts() {
         List<ApiAccount> apiAccounts = new ArrayList<>();
         for (DbAccount dbAccount : accountRepository.getAccounts().values()) {
             apiAccounts.add(accountMapper.mapToApiAccount(dbAccount, EURO_EXCHANGE_RATE));
@@ -39,22 +40,25 @@ public class AppController {
     }
 
     @PostMapping("/accounts")
-    private ApiAccount createAccount(@RequestBody DbAccount dbAccount) {
+    private ApiAccount createAccount(@RequestBody ApiAccount apiAccount) {
+        DbAccount dbAccount = accountMapper.mapToDbAccount(apiAccount);
         DbAccount createdAccount = accountRepository.addAccount(dbAccount);
         return accountMapper.mapToApiAccount(createdAccount, EURO_EXCHANGE_RATE);
     }
 
     @PostMapping("/accounts/{id}/transactions")
-    private ApiBalance addTransaction(@RequestBody DbTransaction transaction, @PathVariable("id") Long id) {
+    private ApiBalance addTransaction(@RequestBody ApiTransaction apiTransaction, @PathVariable("id") Long id) {
         DbAccount account = accountRepository.findAccountById(id);
-        account.addTransaction(transaction);
+        DbTransaction dbTransaction = accountMapper.mapToDbTransaction(apiTransaction);
+        account.addTransaction(dbTransaction);
         //TODO execute update db record
         ApiAccount apiAccount = accountMapper.mapToApiAccount(account, EURO_EXCHANGE_RATE);
         return apiAccount.getBalance();
     }
 
     @PutMapping("/accounts")
-    private ApiAccount updateAccount(@RequestBody DbAccount dbAccount) {
+    private ApiAccount updateAccount(@RequestBody ApiAccount apiAccount) {
+        DbAccount dbAccount = accountMapper.mapToDbAccount(apiAccount);
         DbAccount updatedAccount = accountRepository.updateAccount(dbAccount);
         return accountMapper.mapToApiAccount(updatedAccount, EURO_EXCHANGE_RATE);
     }

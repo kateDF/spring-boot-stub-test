@@ -43,6 +43,10 @@ public class AccountMapper {
         return dbAccount;
     }
 
+    public DbTransaction mapToDbTransaction(ApiTransaction apiTransaction) {
+        return new DbTransaction(apiTransaction.getType(), apiTransaction.getAmount());
+    }
+
     private List<ApiTransaction> mapToApiTransactions(List<DbTransaction> dbTransactions) {
         if (dbTransactions == null) {
             return null;
@@ -57,7 +61,7 @@ public class AccountMapper {
     private List<DbTransaction> mapToDbTransaction(List<ApiTransaction> apiTransactions) {
         List<DbTransaction> dbTransactions = new ArrayList<>();
         for (ApiTransaction apiTransaction : apiTransactions) {
-            dbTransactions.add(new DbTransaction(apiTransaction.getType(), apiTransaction.getAmount()));
+            dbTransactions.add(mapToDbTransaction(apiTransaction));
         }
         return dbTransactions;
     }
