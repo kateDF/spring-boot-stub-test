@@ -47,8 +47,25 @@ public class DbAccountRepository {
             accounts.put(account.getId(), account);
             return account;
         } else {
-            throw new IllegalArgumentException("User with " + account.getId() + " id has already exists.");
+            throw new IllegalArgumentException("Account with " + account.getId() + " id has already exists.");
         }
+    }
+
+    public DbAccount deleteAccountById(Long id) {
+        if (accounts.containsKey(id)) {
+            return accounts.remove(id);
+        } else {
+            System.out.println("No accounts found with " + id + " id");
+            return null;
+        }
+    }
+
+    public DbAccount updateAccount(DbAccount account) {
+        if (accounts.containsKey(account.getId())) {
+            accounts.remove(account.getId());
+        }
+        accounts.put(account.getId(), account);
+        return account;
     }
 
     private List<DbTransaction> getListTransactions(DbTransaction... transactions) {

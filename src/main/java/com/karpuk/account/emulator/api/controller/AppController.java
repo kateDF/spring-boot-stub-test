@@ -53,4 +53,16 @@ public class AppController {
         return apiAccount.getBalance();
     }
 
+    @PutMapping("/accounts")
+    private ApiAccount updateAccount(@RequestBody DbAccount dbAccount) {
+        DbAccount updatedAccount = accountRepository.updateAccount(dbAccount);
+        return accountMapper.mapToApiAccount(updatedAccount, EURO_EXCHANGE_RATE);
+    }
+
+    @DeleteMapping("/accounts/{id}")
+    private ApiAccount deleteAccount(@PathVariable("id") Long id){
+        DbAccount deletedAccount = accountRepository.deleteAccountById(id);
+        return accountMapper.mapToApiAccount(deletedAccount, EURO_EXCHANGE_RATE);
+    }
+
 }
