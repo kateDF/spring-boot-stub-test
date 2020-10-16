@@ -12,8 +12,10 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -33,8 +35,8 @@ public class HttpRequestTest {
 
     @Test
     public void testGetAccounts() {
-        ResponseEntity<List<ApiAccount>> response = restTemplate.exchange("http://localhost:" + port + "/accounts", HttpMethod.GET,
-                null, new ParameterizedTypeReference<List<ApiAccount>>() {
+        ResponseEntity<List<ApiAccount>> response = restTemplate.exchange("http://localhost:" + port + "/accounts",
+                HttpMethod.GET, null, new ParameterizedTypeReference<List<ApiAccount>>() {
                 });
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody()).as("Verify accounts list not empty by default").isNotNull();
@@ -43,7 +45,8 @@ public class HttpRequestTest {
     @ParameterizedTest(name = "{index} => id={0}")
     @ValueSource(longs = {10000, 10001})
     public void testSuccessFindAccountById(Long id) {
-        ResponseEntity<ApiAccount> response = restTemplate.getForEntity("http://localhost:" + port + "/accounts" + "/" + id, ApiAccount.class);
+        ResponseEntity<ApiAccount> response = restTemplate.getForEntity("http://localhost:" + port + "/accounts" +
+                "/" + id, ApiAccount.class);
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getId()).as("Verify account id").isEqualTo(id);
     }
@@ -54,13 +57,61 @@ public class HttpRequestTest {
                 new ApiTransaction("Paycheck", 900),
                 new ApiTransaction("Food", 102.16)
         ));
-        ApiAccount expectedApiAccount = new ApiAccount(10005L, "Li Tang", LocalDate.now(), new ApiBalance(1002.16, 1002.16 * EURO_EXCHANGE_RATE), Arrays.asList(
+        ApiAccount expectedApiAccount = new ApiAccount(10005L, "Li Tang", LocalDate.now(),
+                new ApiBalance(1002.16, 1002.16 * EURO_EXCHANGE_RATE), Arrays.asList(
                 new ApiTransaction("Paycheck", 900),
                 new ApiTransaction("Food", 102.16)
         ));
-        ResponseEntity<ApiAccount> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts", originalApiAccount, ApiAccount.class);
+        ResponseEntity<ApiAccount> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts",
+                originalApiAccount, ApiAccount.class);
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody()).as("Verify that exact account has been created").isEqualToComparingFieldByField(expectedApiAccount);
+        assertThat(response.getBody()).as("Verify account has been created").isEqualToComparingFieldByField(expectedApiAccount);
+    }
+
+    @Test
+    public void testSuccessAddTransaction() {
+        long idAccount = 10002L;
+        ApiAccount startAccount = getRequestApiAccountById(idAccount);
+        ApiTransaction apiTransaction = new ApiTransaction("Paycheck", 1000);
+        double expectedUsdBalance = startAccount.getBalance().getUsdBalance() + 1000;
+
+        ResponseEntity<ApiBalance> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts" +
+                "/" + idAccount + "/transactions", apiTransaction, ApiBalance.class);
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
+        assertThat(response.getBody().getUsdBalance()).as("Verify that usd balance after transaction adding").isEqualTo(expectedUsdBalance);
+        assertThat(response.getBody().getEuroBalance()).as("Verify that euro balance after transaction adding").isEqualTo(expectedUsdBalance * EURO_EXCHANGE_RATE);
+    }
+
+    @Test
+    public void testSuccessUpdateAccount() {
+        ApiAccount account = new ApiAccount(10001L, "Marry R", LocalDate.now().minusDays(4),
+                new ApiBalance(240.2, 240.2 * EURO_EXCHANGE_RATE), Arrays.asList(
+                new ApiTransaction("Other", 100),
+                new ApiTransaction("Check", 140.2)));
+        RequestEntity<ApiAccount> requestEntity = RequestEntity
+                .put(URI.create("http://localhost:" + port + "/accounts"))
+                .body(account);
+        ResponseEntity<ApiAccount> response = restTemplate.exchange(requestEntity, ApiAccount.class);
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
+        assertThat(response.getBody().getId()).as("Verify id").isEqualTo(account.getId());
+        assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(account.getFullName());
+        assertThat(response.getBody().getBalance()).as("Verify balance").isEqualTo(account.getBalance());
+        assertThat(response.getBody().getTransactions()).as("Verify transactions").isEqualTo(account.getTransactions());
+    }
+
+    @Test
+    public void successDeleteAccount() {
+        long idAccount = 10001L;
+        RequestEntity<ApiAccount> requestEntity = new RequestEntity<>(HttpMethod.DELETE, URI.create("http://localhost" +
+                ":" + port + "/accounts" + "/" + idAccount));
+        ResponseEntity<ApiAccount> response = restTemplate.exchange(requestEntity, ApiAccount.class);
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
+        assertThat(response.getBody().getId()).as("Verify account has been deleted").isEqualTo(idAccount);
+
+    }
+
+    private ApiAccount getRequestApiAccountById(Long id) {
+        return restTemplate.getForObject("http://localhost:" + port + "/accounts" + "/" + id, ApiAccount.class);
     }
 
 }
