@@ -1,4 +1,4 @@
-package com.karpuk.account.emulator.api.controller;
+package com.karpuk.account.emulator.controller;
 
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
