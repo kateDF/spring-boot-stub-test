@@ -3,6 +3,7 @@ package com.karpuk.account.emulator;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
+import com.karpuk.account.emulator.upstream.currency.client.CurrencyExchangeClient;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -25,13 +26,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class HttpRequestTest {
 
-    private static double EURO_EXCHANGE_RATE = 0.85;
-
     @LocalServerPort
     private int port;
 
     @Autowired
     private TestRestTemplate restTemplate;
+    @Autowired
+    private CurrencyExchangeClient currencyExchangeClient;
 
     @Test
     public void testGetAccounts() {
@@ -58,7 +59,7 @@ public class HttpRequestTest {
                 new ApiTransaction("Food", 102.16)
         ));
         ApiAccount expectedApiAccount = new ApiAccount(10005L, "Li Tang", LocalDate.now(),
-                new ApiBalance(1002.16, 1002.16 * EURO_EXCHANGE_RATE), Arrays.asList(
+                new ApiBalance(1002.16, 1002.16 * getUsdEurRate()), Arrays.asList(
                 new ApiTransaction("Paycheck", 900),
                 new ApiTransaction("Food", 102.16)
         ));
@@ -78,14 +79,14 @@ public class HttpRequestTest {
         ResponseEntity<ApiBalance> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts" +
                 "/" + idAccount + "/transactions", apiTransaction, ApiBalance.class);
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody().getUsdBalance()).as("Verify that usd balance after transaction adding").isEqualTo(expectedUsdBalance);
-        assertThat(response.getBody().getEuroBalance()).as("Verify that euro balance after transaction adding").isEqualTo(expectedUsdBalance * EURO_EXCHANGE_RATE);
+        assertThat(response.getBody().getUsdBalance()).as("Verify usd balance after transaction adding").isEqualTo(expectedUsdBalance);
+        assertThat(response.getBody().getEuroBalance()).as("Verify euro balance after transaction adding").isEqualTo(expectedUsdBalance * getUsdEurRate());
     }
 
     @Test
     public void testSuccessUpdateAccount() {
         ApiAccount account = new ApiAccount(10001L, "Marry R", LocalDate.now().minusDays(4),
-                new ApiBalance(240.2, 240.2 * EURO_EXCHANGE_RATE), Arrays.asList(
+                new ApiBalance(240.2, 240.2 * getUsdEurRate()), Arrays.asList(
                 new ApiTransaction("Other", 100),
                 new ApiTransaction("Check", 140.2)));
         RequestEntity<ApiAccount> requestEntity = RequestEntity
@@ -112,6 +113,10 @@ public class HttpRequestTest {
 
     private ApiAccount getRequestApiAccountById(Long id) {
         return restTemplate.getForObject("http://localhost:" + port + "/accounts" + "/" + id, ApiAccount.class);
+    }
+
+    private double getUsdEurRate() {
+        return currencyExchangeClient.getUsdEuroRate();
     }
 
 }
