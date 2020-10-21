@@ -1,9 +1,11 @@
 package com.karpuk.account.emulator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
 import com.karpuk.account.emulator.upstream.currency.client.CurrencyExchangeClient;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -11,20 +13,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWireMock(port = 8090)
+@ActiveProfiles("test-stub")
 public class HttpRequestTest {
+
+    private static final double EUR_RATE = 0.8467400508;
+    private static final String MOCK_RATE_RESPONSE_PATH = "src/main/resources/rate-response.json";
 
     @LocalServerPort
     private int port;
@@ -33,6 +45,14 @@ public class HttpRequestTest {
     private TestRestTemplate restTemplate;
     @Autowired
     private CurrencyExchangeClient currencyExchangeClient;
+
+    @BeforeEach
+    public void setUp() {
+        stubFor(get(urlEqualTo("/latest?base=USD")).willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json")
+                .withBody(getBodyForCurrencyStub())));
+    }
 
     @Test
     public void testGetAccounts() {
@@ -59,7 +79,7 @@ public class HttpRequestTest {
                 new ApiTransaction("Food", 102.16)
         ));
         ApiAccount expectedApiAccount = new ApiAccount(10005L, "Li Tang", LocalDate.now(),
-                new ApiBalance(1002.16, 1002.16 * getUsdEurRate()), Arrays.asList(
+                new ApiBalance(1002.16, 1002.16 * EUR_RATE), Arrays.asList(
                 new ApiTransaction("Paycheck", 900),
                 new ApiTransaction("Food", 102.16)
         ));
@@ -80,13 +100,13 @@ public class HttpRequestTest {
                 "/" + idAccount + "/transactions", apiTransaction, ApiBalance.class);
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getUsdBalance()).as("Verify usd balance after transaction adding").isEqualTo(expectedUsdBalance);
-        assertThat(response.getBody().getEuroBalance()).as("Verify euro balance after transaction adding").isEqualTo(expectedUsdBalance * getUsdEurRate());
+        assertThat(response.getBody().getEuroBalance()).as("Verify euro balance after transaction adding").isEqualTo(expectedUsdBalance * EUR_RATE);
     }
 
     @Test
     public void testSuccessUpdateAccount() {
         ApiAccount account = new ApiAccount(10001L, "Marry R", LocalDate.now().minusDays(4),
-                new ApiBalance(240.2, 240.2 * getUsdEurRate()), Arrays.asList(
+                new ApiBalance(240.2, 240.2 * EUR_RATE), Arrays.asList(
                 new ApiTransaction("Other", 100),
                 new ApiTransaction("Check", 140.2)));
         RequestEntity<ApiAccount> requestEntity = RequestEntity
@@ -115,8 +135,13 @@ public class HttpRequestTest {
         return restTemplate.getForObject("http://localhost:" + port + "/accounts" + "/" + id, ApiAccount.class);
     }
 
-    private double getUsdEurRate() {
-        return currencyExchangeClient.getUsdEuroRate();
+    private String getBodyForCurrencyStub() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.readTree(new File(MOCK_RATE_RESPONSE_PATH)).toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not prepare stub", e);
+        }
     }
 
 }
