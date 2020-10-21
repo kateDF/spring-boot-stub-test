@@ -68,7 +68,7 @@
                         </goals>
                         <configuration>
                             <sources>
-                                <source>src/web-layer-test</source>
+                                <source>src/web-layer-test/java</source>
                             </sources>
                         </configuration>
                     </execution>

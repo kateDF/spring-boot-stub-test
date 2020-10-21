@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class HttpRequestTest {
 
     private static final double EUR_RATE = 0.8467400508;
-    private static final String MOCK_RATE_RESPONSE_PATH = "src/main/resources/rate-response.json";
+    private static final String EXCHANGE_RATE_RESPONSE_TEMPLATE = "src/web-layer-test/resources/rate-response.json";
 
     @LocalServerPort
     private int port;
@@ -138,7 +138,7 @@ public class HttpRequestTest {
     private String getBodyForCurrencyStub() {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            return objectMapper.readTree(new File(MOCK_RATE_RESPONSE_PATH)).toString();
+            return objectMapper.readTree(new File(EXCHANGE_RATE_RESPONSE_TEMPLATE)).toString();
         } catch (IOException e) {
             throw new RuntimeException("Could not prepare stub", e);
         }
