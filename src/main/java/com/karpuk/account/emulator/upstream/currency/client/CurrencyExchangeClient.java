@@ -2,6 +2,7 @@ package com.karpuk.account.emulator.upstream.currency.client;
 
 import com.karpuk.account.emulator.upstream.currency.model.ResponseExchangeRate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -15,7 +16,8 @@ public class CurrencyExchangeClient {
     @Autowired
     private RestTemplate restTemplate;
 
-    private static final String URL = "https://api.exchangeratesapi.io/latest";
+    @Value("${application.currency-exchange.url}")
+    private String URL;
     private static final String BASE_VALUE = "USD";
 
     public double getUsdEuroRate() {
