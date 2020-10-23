@@ -1,10 +1,15 @@
 package com.karpuk.account.emulator.db.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import java.time.LocalDate;
 import java.util.List;
 
+@Document(collection = "accounts")
 public class DbAccount {
 
+    @Id
     private Long id;
     private String fullName;
     private LocalDate registrationDate = LocalDate.now();
@@ -66,7 +71,8 @@ public class DbAccount {
 
         if (id != null ? !id.equals(dbAccount.id) : dbAccount.id != null) return false;
         if (fullName != null ? !fullName.equals(dbAccount.fullName) : dbAccount.fullName != null) return false;
-        if (registrationDate != null ? !registrationDate.equals(dbAccount.registrationDate) : dbAccount.registrationDate != null)
+        if (registrationDate != null ? !registrationDate.equals(dbAccount.registrationDate) :
+                dbAccount.registrationDate != null)
             return false;
         return transactions != null ? transactions.equals(dbAccount.transactions) : dbAccount.transactions == null;
     }
