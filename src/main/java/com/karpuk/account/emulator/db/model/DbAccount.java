@@ -10,7 +10,7 @@ import java.util.List;
 public class DbAccount {
 
     @Id
-    private Long id;
+    private String id;
     private String fullName;
     private LocalDate registrationDate = LocalDate.now();
     private List<DbTransaction> transactions;
@@ -18,18 +18,18 @@ public class DbAccount {
     public DbAccount() {
     }
 
-    public DbAccount(Long id, String fullName, LocalDate registrationDate, List<DbTransaction> transactions) {
+    public DbAccount(String id, String fullName, LocalDate registrationDate, List<DbTransaction> transactions) {
         this.id = id;
         this.fullName = fullName;
         this.registrationDate = registrationDate;
         this.transactions = transactions;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 

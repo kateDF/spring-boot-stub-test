@@ -28,7 +28,7 @@ public class AppController {
     private DbAccountMongoRepository dbAccountMongoRepository;
 
     @GetMapping("/accounts/{id}")
-    public ApiAccount getAccountById(@PathVariable("id") Long id) {
+    public ApiAccount getAccountById(@PathVariable("id") String id) {
         Optional<DbAccount> dbAccount = dbAccountMongoRepository.findById(id);
         return accountMapper.mapToApiAccount(dbAccount.get(), currencyExchangeClient.getUsdEuroRate());
     }
@@ -50,7 +50,7 @@ public class AppController {
     }
 
     @PostMapping("/accounts/{id}/transactions")
-    private ApiBalance addTransaction(@RequestBody ApiTransaction apiTransaction, @PathVariable("id") Long id) {
+    private ApiBalance addTransaction(@RequestBody ApiTransaction apiTransaction, @PathVariable("id") String id) {
         Optional<DbAccount> dbAccount = dbAccountMongoRepository.findById(id);
         DbTransaction dbTransaction = accountMapper.mapToDbTransaction(apiTransaction);
         dbAccount.get().addTransaction(dbTransaction);
@@ -67,7 +67,7 @@ public class AppController {
     }
 
     @DeleteMapping("/accounts/{id}")
-    private void deleteAccount(@PathVariable("id") Long id) {
+    private void deleteAccount(@PathVariable("id") String id) {
         Optional<DbAccount> dbAccount = dbAccountMongoRepository.findById(id);
         dbAccountMongoRepository.delete(dbAccount.get());
     }
