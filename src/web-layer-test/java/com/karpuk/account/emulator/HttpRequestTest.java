@@ -4,7 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
+import com.karpuk.account.emulator.test.model.TestDbAccount;
+import com.karpuk.account.emulator.test.model.TestDbTransaction;
+import com.karpuk.account.emulator.test.utils.TestAccountMapper;
 import com.karpuk.account.emulator.upstream.currency.client.CurrencyExchangeClient;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,6 +19,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +52,10 @@ public class HttpRequestTest {
     private TestRestTemplate restTemplate;
     @Autowired
     private CurrencyExchangeClient currencyExchangeClient;
+    @Autowired
+    private TestAccountMapper testAccountMapper;
+    @Autowired
+    private MongoTemplate mongoTemplate;
 
     @BeforeEach
     public void setUp() {
@@ -76,18 +85,13 @@ public class HttpRequestTest {
 
     @Test
     public void testSuccessCreateAccount() {
-        String fullName = getRandomName(10);
-        ApiAccount originalApiAccount = new ApiAccount(null, fullName, null, null, Arrays.asList(
-                new ApiTransaction("Paycheck", 900),
-                new ApiTransaction("Food", 102.16)
+        TestDbAccount testDbAccount = new TestDbAccount(null, getRandomName(10), null, Arrays.asList(
+                new TestDbTransaction("Paycheck", getRandomTransactionValue()),
+                new TestDbTransaction("Food", getRandomTransactionValue())
         ));
-        ApiAccount expectedApiAccount = new ApiAccount(null, fullName, LocalDate.now(),
-                new ApiBalance(1002.16, 1002.16 * EUR_RATE), Arrays.asList(
-                new ApiTransaction("Paycheck", 900),
-                new ApiTransaction("Food", 102.16)
-        ));
+        ApiAccount expectedApiAccount = testAccountMapper.mapToApiAccount(testDbAccount, EUR_RATE);
         ResponseEntity<ApiAccount> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts",
-                originalApiAccount, ApiAccount.class);
+                expectedApiAccount, ApiAccount.class);
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(expectedApiAccount.getFullName());
         assertThat(response.getBody().getBalance()).as("Verify balance").isEqualTo(expectedApiAccount.getBalance());
@@ -96,7 +100,7 @@ public class HttpRequestTest {
 
     @Test
     public void testSuccessAddTransaction() {
-        ApiAccount originalApiAccount = createRandomAccountInDb();
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         ApiTransaction apiTransaction = new ApiTransaction("Paycheck", getRandomTransactionValue());
         double expectedUsdBalance = originalApiAccount.getBalance().getUsdBalance() + apiTransaction.getAmount();
 
@@ -104,12 +108,12 @@ public class HttpRequestTest {
                 "/" + originalApiAccount.getId() + "/transactions", apiTransaction, ApiBalance.class);
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getUsdBalance()).as("Verify usd balance after transaction adding").isEqualTo(expectedUsdBalance);
-        assertThat(response.getBody().getEuroBalance()).as("Verify euro balance after transaction adding").isEqualTo(expectedUsdBalance * EUR_RATE);
+        assertThat(response.getBody().getEuroBalance()).as("Verify euro balance after transaction adding").isEqualTo(expectedUsdBalance * EUR_RATE, Offset.offset(0.01));
     }
 
     @Test
     public void testSuccessUpdateAccount() {
-        ApiAccount originalApiAccount = createRandomAccountInDb();
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         String newFullName = getRandomName(10);
         originalApiAccount.setFullName(newFullName);
 
@@ -126,7 +130,7 @@ public class HttpRequestTest {
 
     @Test
     public void successDeleteAccount() {
-        ApiAccount originalApiAccount = createRandomAccountInDb();
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         RequestEntity<ApiAccount> requestEntity = new RequestEntity<>(HttpMethod.DELETE, URI.create("http://localhost" +
                 ":" + port + "/accounts" + "/" + originalApiAccount.getId()));
         ResponseEntity<ApiAccount> response = restTemplate.exchange(requestEntity, ApiAccount.class);
@@ -142,14 +146,12 @@ public class HttpRequestTest {
         }
     }
 
-    private ApiAccount createRandomAccountInDb() {
-        String fullName = getRandomName(10);
-        ApiAccount account = new ApiAccount(null, fullName, null, null, Arrays.asList(
-                new ApiTransaction("Other", getRandomTransactionValue()),
-                new ApiTransaction("Paycheck", getRandomTransactionValue())));
-        ResponseEntity<ApiAccount> response = restTemplate.postForEntity("http://localhost:" + port +
-                "/accounts", account, ApiAccount.class);
-        return response.getBody();
+    private TestDbAccount createRandomAccountInDb() {
+        TestDbAccount dbObject = mongoTemplate.insert(new TestDbAccount(null, getRandomName(10), LocalDate.now(),
+                Arrays.asList(
+                        new TestDbTransaction("Other", getRandomTransactionValue()),
+                        new TestDbTransaction("Paycheck", getRandomTransactionValue()))));
+        return dbObject;
     }
 
     private String getRandomName(int length) {
