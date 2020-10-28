@@ -71,9 +71,10 @@ public class HttpRequestTest {
                 HttpMethod.GET, null, new ParameterizedTypeReference<List<ApiAccount>>() {
                 });
         long actualSize = response.getBody().size();
+
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(actualSize).as("Verify db size").isEqualTo(expectedDbSize);
-        assertThat(response.getBody()).as("Verify that db has original account").contains(originalApiAccount);
+        assertThat(response.getBody()).as("Verify original account").contains(originalApiAccount);
     }
 
     @Test
@@ -81,8 +82,9 @@ public class HttpRequestTest {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         ResponseEntity<ApiAccount> response = restTemplate.getForEntity("http://localhost:" + port + "/accounts" +
                 "/" + originalApiAccount.getId(), ApiAccount.class);
+
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody()).as("Verify account id").isEqualToComparingFieldByField(originalApiAccount);
+        assertThat(response.getBody()).as("Verify account").isEqualToComparingFieldByField(originalApiAccount);
     }
 
     @Test
@@ -94,6 +96,7 @@ public class HttpRequestTest {
         ApiAccount expectedApiAccount = testAccountMapper.mapToApiAccount(testDbAccount, EUR_RATE);
         ResponseEntity<ApiAccount> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts",
                 expectedApiAccount, ApiAccount.class);
+
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(expectedApiAccount.getFullName());
         assertThat(response.getBody().getBalance()).as("Verify balance").isEqualTo(expectedApiAccount.getBalance());
@@ -108,9 +111,10 @@ public class HttpRequestTest {
 
         ResponseEntity<ApiBalance> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts" +
                 "/" + originalApiAccount.getId() + "/transactions", apiTransaction, ApiBalance.class);
+
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody().getUsdBalance()).as("Verify usd balance after transaction adding").isEqualTo(expectedUsdBalance);
-        assertThat(response.getBody().getEuroBalance()).as("Verify euro balance after transaction adding").isEqualTo(expectedUsdBalance * EUR_RATE, Offset.offset(0.01));
+        assertThat(response.getBody().getUsdBalance()).as("Verify usd balance").isEqualTo(expectedUsdBalance);
+        assertThat(response.getBody().getEuroBalance()).as("Verify euro balance").isEqualTo(expectedUsdBalance * EUR_RATE, Offset.offset(0.01));
     }
 
     @Test
@@ -123,6 +127,7 @@ public class HttpRequestTest {
                 .put(URI.create("http://localhost:" + port + "/accounts"))
                 .body(originalApiAccount);
         ResponseEntity<ApiAccount> response = restTemplate.exchange(requestEntity, ApiAccount.class);
+
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getId()).as("Verify id").isEqualTo(originalApiAccount.getId());
         assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(originalApiAccount.getFullName());
@@ -136,6 +141,7 @@ public class HttpRequestTest {
         RequestEntity<ApiAccount> requestEntity = new RequestEntity<>(HttpMethod.DELETE, URI.create("http://localhost" +
                 ":" + port + "/accounts" + "/" + originalApiAccount.getId()));
         ResponseEntity<ApiAccount> response = restTemplate.exchange(requestEntity, ApiAccount.class);
+
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
     }
 
@@ -158,7 +164,6 @@ public class HttpRequestTest {
 
     private long getDbSize() {
         long documentsCount = mongoTemplate.getCollection("accounts").countDocuments();
-        System.out.println("!!!!!!!!!!" + documentsCount);
         return documentsCount;
     }
 
