@@ -11,8 +11,6 @@ import com.karpuk.account.emulator.upstream.currency.client.CurrencyExchangeClie
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -67,20 +65,24 @@ public class HttpRequestTest {
 
     @Test
     public void testGetAccounts() {
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
+        long expectedDbSize = getDbSize();
         ResponseEntity<List<ApiAccount>> response = restTemplate.exchange("http://localhost:" + port + "/accounts",
                 HttpMethod.GET, null, new ParameterizedTypeReference<List<ApiAccount>>() {
                 });
+        long actualSize = response.getBody().size();
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody()).as("Verify accounts list not empty by default").isNotNull();
+        assertThat(actualSize).as("Verify db size").isEqualTo(expectedDbSize);
+        assertThat(response.getBody()).as("Verify that db has original account").contains(originalApiAccount);
     }
 
-    @ParameterizedTest(name = "{index} => id={0}")
-    @ValueSource(strings = {"5f96e1c8f5a331684a5c4b49", "5f96e21ff5a331684a5c4b4a"})
-    public void testSuccessFindAccountById(String id) {
+    @Test
+    public void testSuccessFindAccountById() {
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         ResponseEntity<ApiAccount> response = restTemplate.getForEntity("http://localhost:" + port + "/accounts" +
-                "/" + id, ApiAccount.class);
+                "/" + originalApiAccount.getId(), ApiAccount.class);
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody().getId()).as("Verify account id").isEqualTo(id);
+        assertThat(response.getBody()).as("Verify account id").isEqualToComparingFieldByField(originalApiAccount);
     }
 
     @Test
@@ -152,6 +154,12 @@ public class HttpRequestTest {
                         new TestDbTransaction("Other", getRandomTransactionValue()),
                         new TestDbTransaction("Paycheck", getRandomTransactionValue()))));
         return dbObject;
+    }
+
+    private long getDbSize() {
+        long documentsCount = mongoTemplate.getCollection("accounts").countDocuments();
+        System.out.println("!!!!!!!!!!" + documentsCount);
+        return documentsCount;
     }
 
     private String getRandomName(int length) {

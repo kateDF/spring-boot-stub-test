@@ -61,4 +61,41 @@ public class ApiAccount {
     public void setTransactions(List<ApiTransaction> transactions) {
         this.transactions = transactions;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        ApiAccount that = (ApiAccount) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) return false;
+        if (fullName != null ? !fullName.equals(that.fullName) : that.fullName != null) return false;
+        if (registrationDate != null ? !registrationDate.equals(that.registrationDate) : that.registrationDate != null)
+            return false;
+        if (balance != null ? !balance.equals(that.balance) : that.balance != null) return false;
+        return transactions != null ? transactions.equals(that.transactions) : that.transactions == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (fullName != null ? fullName.hashCode() : 0);
+        result = 31 * result + (registrationDate != null ? registrationDate.hashCode() : 0);
+        result = 31 * result + (balance != null ? balance.hashCode() : 0);
+        result = 31 * result + (transactions != null ? transactions.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ApiAccount{" +
+                "id='" + id + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", registrationDate=" + registrationDate +
+                ", balance=" + balance +
+                ", transactions=" + transactions +
+                '}';
+    }
+
 }
