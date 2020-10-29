@@ -35,7 +35,7 @@ import java.util.Random;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = SpringBootAppLauncher.class)
 @AutoConfigureWireMock(port = 8090)
 @ActiveProfiles("test-stub")
 public class HttpRequestTest {
