@@ -113,7 +113,7 @@ public class HttpRequestTest {
                 "/" + originalApiAccount.getId() + "/transactions", apiTransaction, ApiBalance.class);
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody().getUsdBalance()).as("Verify usd balance").isEqualTo(expectedUsdBalance);
+        assertThat(response.getBody().getUsdBalance()).as("Verify usd balance").isEqualTo(expectedUsdBalance, Offset.offset(0.01));
         assertThat(response.getBody().getEuroBalance()).as("Verify euro balance").isEqualTo(expectedUsdBalance * EUR_RATE, Offset.offset(0.01));
     }
 
