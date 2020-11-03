@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
+import com.karpuk.account.emulator.test.client.TestClient;
 import com.karpuk.account.emulator.test.model.TestDbAccount;
 import com.karpuk.account.emulator.test.model.TestDbTransaction;
 import com.karpuk.account.emulator.test.utils.TestAccountMapper;
@@ -13,20 +14,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import wiremock.org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -47,7 +43,7 @@ public class HttpRequestTest {
     private int port;
 
     @Autowired
-    private TestRestTemplate restTemplate;
+    private TestClient testClient;
     @Autowired
     private CurrencyExchangeClient currencyExchangeClient;
     @Autowired
@@ -67,9 +63,7 @@ public class HttpRequestTest {
     public void testGetAccounts() {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         long expectedDbSize = getDbSize();
-        ResponseEntity<List<ApiAccount>> response = restTemplate.exchange("http://localhost:" + port + "/accounts",
-                HttpMethod.GET, null, new ParameterizedTypeReference<List<ApiAccount>>() {
-                });
+        ResponseEntity<List<ApiAccount>> response = testClient.getAllDbAccounts(port);
         long actualSize = response.getBody().size();
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
@@ -80,8 +74,7 @@ public class HttpRequestTest {
     @Test
     public void testSuccessFindAccountById() {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
-        ResponseEntity<ApiAccount> response = restTemplate.getForEntity("http://localhost:" + port + "/accounts" +
-                "/" + originalApiAccount.getId(), ApiAccount.class);
+        ResponseEntity<ApiAccount> response = testClient.getAccountById(port, originalApiAccount.getId());
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody()).as("Verify account").isEqualToComparingFieldByField(originalApiAccount);
@@ -94,8 +87,7 @@ public class HttpRequestTest {
                 new TestDbTransaction("Food", getRandomTransactionValue())
         ));
         ApiAccount expectedApiAccount = testAccountMapper.mapToApiAccount(testDbAccount, EUR_RATE);
-        ResponseEntity<ApiAccount> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts",
-                expectedApiAccount, ApiAccount.class);
+        ResponseEntity<ApiAccount> response = testClient.postAccount(port, expectedApiAccount);
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(expectedApiAccount.getFullName());
@@ -108,9 +100,8 @@ public class HttpRequestTest {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         ApiTransaction apiTransaction = new ApiTransaction("Paycheck", getRandomTransactionValue());
         double expectedUsdBalance = originalApiAccount.getBalance().getUsdBalance() + apiTransaction.getAmount();
-
-        ResponseEntity<ApiBalance> response = restTemplate.postForEntity("http://localhost:" + port + "/accounts" +
-                "/" + originalApiAccount.getId() + "/transactions", apiTransaction, ApiBalance.class);
+        ResponseEntity<ApiBalance> response = testClient.addTransaction(port, originalApiAccount.getId(),
+                apiTransaction);
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getUsdBalance()).as("Verify usd balance").isEqualTo(expectedUsdBalance, Offset.offset(0.01));
@@ -119,28 +110,22 @@ public class HttpRequestTest {
 
     @Test
     public void testSuccessUpdateAccount() {
-        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
+        ApiAccount apiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         String newFullName = getRandomName(10);
-        originalApiAccount.setFullName(newFullName);
-
-        RequestEntity<ApiAccount> requestEntity = RequestEntity
-                .put(URI.create("http://localhost:" + port + "/accounts"))
-                .body(originalApiAccount);
-        ResponseEntity<ApiAccount> response = restTemplate.exchange(requestEntity, ApiAccount.class);
+        apiAccount.setFullName(newFullName);
+        ResponseEntity<ApiAccount> response = testClient.updateAccount(port, apiAccount);
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody().getId()).as("Verify id").isEqualTo(originalApiAccount.getId());
-        assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(originalApiAccount.getFullName());
-        assertThat(response.getBody().getBalance()).as("Verify balance").isEqualTo(originalApiAccount.getBalance());
-        assertThat(response.getBody().getTransactions()).as("Verify transactions").isEqualTo(originalApiAccount.getTransactions());
+        assertThat(response.getBody().getId()).as("Verify id").isEqualTo(apiAccount.getId());
+        assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(apiAccount.getFullName());
+        assertThat(response.getBody().getBalance()).as("Verify balance").isEqualTo(apiAccount.getBalance());
+        assertThat(response.getBody().getTransactions()).as("Verify transactions").isEqualTo(apiAccount.getTransactions());
     }
 
     @Test
     public void successDeleteAccount() {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
-        RequestEntity<ApiAccount> requestEntity = new RequestEntity<>(HttpMethod.DELETE, URI.create("http://localhost" +
-                ":" + port + "/accounts" + "/" + originalApiAccount.getId()));
-        ResponseEntity<ApiAccount> response = restTemplate.exchange(requestEntity, ApiAccount.class);
+        ResponseEntity<ApiAccount> response = testClient.deleteAccount(port, originalApiAccount.getId());
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
     }
