@@ -18,43 +18,46 @@ import java.util.List;
 @Service
 public class TestApplicationClient {
 
-    @Value("${test.base.url}")
-    private String baseUrl;
-    @Value(("${test.transactions.endpoint}"))
+    @Value("${test.endpoints.accounts}")
+    private String accountsEndpoint;
+    @Value("${test.endpoints.account}")
+    private String exactAccountEndpoint;
+    @Value("${test.endpoints.transactions}")
     private String transactionsEndpoint;
 
     @Autowired
     private TestRestTemplate restTemplate;
 
     public ResponseEntity<List<ApiAccount>> getAllDbAccounts() {
-        return restTemplate.exchange(baseUrl,
-                HttpMethod.GET, null, new ParameterizedTypeReference<List<ApiAccount>>() {
+        return restTemplate.exchange(accountsEndpoint, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<ApiAccount>>() {
                 });
     }
 
     public ResponseEntity<ApiAccount> getAccountById(String id) {
-        return restTemplate.getForEntity(baseUrl + "/" + id, ApiAccount.class);
+        return restTemplate.getForEntity(exactAccountEndpoint.replace("{accountId}", id), ApiAccount.class);
     }
 
     public ResponseEntity<ApiAccount> postAccount(ApiAccount account) {
-        return restTemplate.postForEntity(baseUrl, account, ApiAccount.class);
+        return restTemplate.postForEntity(accountsEndpoint, account, ApiAccount.class);
     }
 
     public ResponseEntity<ApiBalance> addTransaction(String accountId,
             ApiTransaction transaction) {
-        return restTemplate.postForEntity(baseUrl + "/" + accountId + transactionsEndpoint, transaction, ApiBalance.class);
+        return restTemplate.postForEntity(transactionsEndpoint.replace("{accountId}", accountId),
+                transaction, ApiBalance.class);
     }
 
     public ResponseEntity<ApiAccount> updateAccount(ApiAccount account) {
         RequestEntity<ApiAccount> requestEntity = RequestEntity
-                .put(URI.create(baseUrl))
+                .put(URI.create(accountsEndpoint))
                 .body(account);
         return restTemplate.exchange(requestEntity, ApiAccount.class);
     }
 
     public ResponseEntity<ApiAccount> deleteAccount(String id) {
         RequestEntity<ApiAccount> requestEntity = new RequestEntity<>(HttpMethod.DELETE,
-                URI.create(baseUrl + "/" + id));
+                URI.create(exactAccountEndpoint.replace("{accountId}", id)));
         return restTemplate.exchange(requestEntity, ApiAccount.class);
     }
 
