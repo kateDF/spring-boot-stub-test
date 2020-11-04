@@ -14,11 +14,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import wiremock.org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
@@ -31,16 +31,14 @@ import java.util.Random;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = SpringBootAppLauncher.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = SpringBootAppLauncher.class)
 @AutoConfigureWireMock(port = 8090)
 @ActiveProfiles("test-stub")
+@TestPropertySource(locations = "/test-stub.properties")
 public class HttpRequestTest {
 
     private static final double EUR_RATE = 0.8467400508;
     private static final String EXCHANGE_RATE_RESPONSE_TEMPLATE = "src/web-layer-test/resources/rate-response.json";
-
-    @LocalServerPort
-    private int port;
 
     @Autowired
     private TestClient testClient;
@@ -63,7 +61,7 @@ public class HttpRequestTest {
     public void testGetAccounts() {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         long expectedDbSize = getDbSize();
-        ResponseEntity<List<ApiAccount>> response = testClient.getAllDbAccounts(port);
+        ResponseEntity<List<ApiAccount>> response = testClient.getAllDbAccounts();
         long actualSize = response.getBody().size();
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
@@ -74,7 +72,7 @@ public class HttpRequestTest {
     @Test
     public void testSuccessFindAccountById() {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
-        ResponseEntity<ApiAccount> response = testClient.getAccountById(port, originalApiAccount.getId());
+        ResponseEntity<ApiAccount> response = testClient.getAccountById(originalApiAccount.getId());
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody()).as("Verify account").isEqualToComparingFieldByField(originalApiAccount);
@@ -87,7 +85,7 @@ public class HttpRequestTest {
                 new TestDbTransaction("Food", getRandomTransactionValue())
         ));
         ApiAccount expectedApiAccount = testAccountMapper.mapToApiAccount(testDbAccount, EUR_RATE);
-        ResponseEntity<ApiAccount> response = testClient.postAccount(port, expectedApiAccount);
+        ResponseEntity<ApiAccount> response = testClient.postAccount(expectedApiAccount);
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getFullName()).as("Verify full name").isEqualTo(expectedApiAccount.getFullName());
@@ -100,11 +98,12 @@ public class HttpRequestTest {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         ApiTransaction apiTransaction = new ApiTransaction("Paycheck", getRandomTransactionValue());
         double expectedUsdBalance = originalApiAccount.getBalance().getUsdBalance() + apiTransaction.getAmount();
-        ResponseEntity<ApiBalance> response = testClient.addTransaction(port, originalApiAccount.getId(),
+        ResponseEntity<ApiBalance> response = testClient.addTransaction(originalApiAccount.getId(),
                 apiTransaction);
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
-        assertThat(response.getBody().getUsdBalance()).as("Verify usd balance").isEqualTo(expectedUsdBalance, Offset.offset(0.01));
+        assertThat(response.getBody().getUsdBalance()).as("Verify usd balance").isEqualTo(expectedUsdBalance,
+                Offset.offset(0.01));
         assertThat(response.getBody().getEuroBalance()).as("Verify euro balance").isEqualTo(expectedUsdBalance * EUR_RATE, Offset.offset(0.01));
     }
 
@@ -113,7 +112,7 @@ public class HttpRequestTest {
         ApiAccount apiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
         String newFullName = getRandomName(10);
         apiAccount.setFullName(newFullName);
-        ResponseEntity<ApiAccount> response = testClient.updateAccount(port, apiAccount);
+        ResponseEntity<ApiAccount> response = testClient.updateAccount(apiAccount);
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getId()).as("Verify id").isEqualTo(apiAccount.getId());
@@ -125,7 +124,7 @@ public class HttpRequestTest {
     @Test
     public void successDeleteAccount() {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
-        ResponseEntity<ApiAccount> response = testClient.deleteAccount(port, originalApiAccount.getId());
+        ResponseEntity<ApiAccount> response = testClient.deleteAccount(originalApiAccount.getId());
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
     }
