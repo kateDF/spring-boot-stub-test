@@ -23,7 +23,6 @@ public class AppController {
     private AccountMapper accountMapper;
     @Autowired
     private CurrencyExchangeClient currencyExchangeClient;
-
     @Autowired
     private DbAccountMongoRepository dbAccountMongoRepository;
 

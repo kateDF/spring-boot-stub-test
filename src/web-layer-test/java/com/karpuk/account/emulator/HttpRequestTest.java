@@ -4,11 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
-import com.karpuk.account.emulator.test.client.TestClient;
+import com.karpuk.account.emulator.test.client.TestApplicationClient;
 import com.karpuk.account.emulator.test.model.TestDbAccount;
 import com.karpuk.account.emulator.test.model.TestDbTransaction;
 import com.karpuk.account.emulator.test.utils.TestAccountMapper;
-import com.karpuk.account.emulator.upstream.currency.client.CurrencyExchangeClient;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,9 +40,7 @@ public class HttpRequestTest {
     private static final String EXCHANGE_RATE_RESPONSE_TEMPLATE = "src/web-layer-test/resources/rate-response.json";
 
     @Autowired
-    private TestClient testClient;
-    @Autowired
-    private CurrencyExchangeClient currencyExchangeClient;
+    private TestApplicationClient testClient;
     @Autowired
     private TestAccountMapper testAccountMapper;
     @Autowired

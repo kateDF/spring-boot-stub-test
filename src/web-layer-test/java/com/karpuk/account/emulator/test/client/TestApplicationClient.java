@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 @Service
-public class TestClient {
+public class TestApplicationClient {
 
     @Value("${test.base.url}")
     private String baseUrl;
