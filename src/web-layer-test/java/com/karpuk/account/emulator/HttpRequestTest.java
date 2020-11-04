@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
+import com.karpuk.account.emulator.test.client.MongoDbClient;
 import com.karpuk.account.emulator.test.client.TestApplicationClient;
 import com.karpuk.account.emulator.test.model.TestDbAccount;
 import com.karpuk.account.emulator.test.model.TestDbTransaction;
@@ -14,20 +15,18 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import wiremock.org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.karpuk.account.emulator.test.utils.TestDataUtils.getRandomName;
+import static com.karpuk.account.emulator.test.utils.TestDataUtils.getRandomTransactionValue;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = SpringBootAppLauncher.class)
@@ -44,7 +43,7 @@ public class HttpRequestTest {
     @Autowired
     private TestAccountMapper testAccountMapper;
     @Autowired
-    private MongoTemplate mongoTemplate;
+    private MongoDbClient mongoDbClient;
 
     @BeforeEach
     public void setUp() {
@@ -56,8 +55,9 @@ public class HttpRequestTest {
 
     @Test
     public void testGetAccounts() {
-        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
-        long expectedDbSize = getDbSize();
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(),
+                EUR_RATE);
+        long expectedDbSize = mongoDbClient.getDbSize();
         ResponseEntity<List<ApiAccount>> response = testClient.getAllDbAccounts();
         long actualSize = response.getBody().size();
 
@@ -68,7 +68,8 @@ public class HttpRequestTest {
 
     @Test
     public void testSuccessFindAccountById() {
-        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(),
+                EUR_RATE);
         ResponseEntity<ApiAccount> response = testClient.getAccountById(originalApiAccount.getId());
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
@@ -92,7 +93,8 @@ public class HttpRequestTest {
 
     @Test
     public void testSuccessAddTransaction() {
-        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(),
+                EUR_RATE);
         ApiTransaction apiTransaction = new ApiTransaction("Paycheck", getRandomTransactionValue());
         double expectedUsdBalance = originalApiAccount.getBalance().getUsdBalance() + apiTransaction.getAmount();
         ResponseEntity<ApiBalance> response = testClient.addTransaction(originalApiAccount.getId(),
@@ -106,7 +108,7 @@ public class HttpRequestTest {
 
     @Test
     public void testSuccessUpdateAccount() {
-        ApiAccount apiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
+        ApiAccount apiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(), EUR_RATE);
         String newFullName = getRandomName(10);
         apiAccount.setFullName(newFullName);
         ResponseEntity<ApiAccount> response = testClient.updateAccount(apiAccount);
@@ -120,7 +122,8 @@ public class HttpRequestTest {
 
     @Test
     public void successDeleteAccount() {
-        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(createRandomAccountInDb(), EUR_RATE);
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(),
+                EUR_RATE);
         ResponseEntity<ApiAccount> response = testClient.deleteAccount(originalApiAccount.getId());
 
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
@@ -133,28 +136,6 @@ public class HttpRequestTest {
         } catch (IOException e) {
             throw new RuntimeException("Could not prepare stub", e);
         }
-    }
-
-    private TestDbAccount createRandomAccountInDb() {
-        TestDbAccount dbObject = mongoTemplate.insert(new TestDbAccount(null, getRandomName(10), LocalDate.now(),
-                Arrays.asList(
-                        new TestDbTransaction("Other", getRandomTransactionValue()),
-                        new TestDbTransaction("Paycheck", getRandomTransactionValue()))));
-        return dbObject;
-    }
-
-    private long getDbSize() {
-        long documentsCount = mongoTemplate.getCollection("accounts").countDocuments();
-        return documentsCount;
-    }
-
-    private String getRandomName(int length) {
-        return RandomStringUtils.random(length, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-    }
-
-    private Double getRandomTransactionValue() {
-        Random r = new Random();
-        return -1000 + (1000 - -1000) * r.nextDouble();
     }
 
 }
