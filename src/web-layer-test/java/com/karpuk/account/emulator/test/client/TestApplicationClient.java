@@ -4,6 +4,7 @@ import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
 import com.karpuk.account.emulator.test.model.TestAppHealth;
+import com.karpuk.account.emulator.test.model.TestAppInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -21,6 +22,8 @@ public class TestApplicationClient {
 
     @Value("${test.endpoints.actuator.health}")
     private String appHealthEndpoint;
+    @Value("${test.endpoints.actuator.info}")
+    private String appInfoEndpoint;
 
     @Value("${test.endpoints.accounts}")
     private String accountsEndpoint;
@@ -34,6 +37,10 @@ public class TestApplicationClient {
 
     public ResponseEntity<TestAppHealth> getAppHealth() {
         return restTemplate.getForEntity(appHealthEndpoint, TestAppHealth.class);
+    }
+
+    public ResponseEntity<TestAppInfo> getAppInfo() {
+        return restTemplate.getForEntity(appInfoEndpoint, TestAppInfo.class);
     }
 
     public ResponseEntity<List<ApiAccount>> getAllDbAccounts() {
