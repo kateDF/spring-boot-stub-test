@@ -7,6 +7,7 @@ import com.karpuk.account.emulator.api.model.ApiTransaction;
 import com.karpuk.account.emulator.test.client.MongoDbClient;
 import com.karpuk.account.emulator.test.client.TestApplicationClient;
 import com.karpuk.account.emulator.test.model.TestAppHealth;
+import com.karpuk.account.emulator.test.model.TestAppInfo;
 import com.karpuk.account.emulator.test.model.TestDbAccount;
 import com.karpuk.account.emulator.test.model.TestDbTransaction;
 import com.karpuk.account.emulator.test.utils.TestAccountMapper;
@@ -60,6 +61,13 @@ public class HttpRequestTest {
         ResponseEntity<TestAppHealth> response = testClient.getAppHealth();
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getStatus()).as("Verify application health status").isEqualTo(Status.UP);
+    }
+
+    @Test
+    public void applicationVersionTest() {
+        ResponseEntity<TestAppInfo> response = testClient.getAppInfo();
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
+        assertThat(response.getBody().getVersion()).as("Verify application version").isEqualTo("1.0-SNAPSHOT");
     }
 
     @Test
