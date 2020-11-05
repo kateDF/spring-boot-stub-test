@@ -3,6 +3,7 @@ package com.karpuk.account.emulator.test.client;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
+import com.karpuk.account.emulator.test.model.TestAppHealth;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -18,6 +19,9 @@ import java.util.List;
 @Service
 public class TestApplicationClient {
 
+    @Value("${test.endpoints.actuator.health}")
+    private String appHealthEndpoint;
+
     @Value("${test.endpoints.accounts}")
     private String accountsEndpoint;
     @Value("${test.endpoints.account}")
@@ -27,6 +31,10 @@ public class TestApplicationClient {
 
     @Autowired
     private TestRestTemplate restTemplate;
+
+    public ResponseEntity<TestAppHealth> getAppHealth() {
+        return restTemplate.getForEntity(appHealthEndpoint, TestAppHealth.class);
+    }
 
     public ResponseEntity<List<ApiAccount>> getAllDbAccounts() {
         return restTemplate.exchange(accountsEndpoint, HttpMethod.GET, null,

@@ -6,6 +6,7 @@ import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
 import com.karpuk.account.emulator.test.client.MongoDbClient;
 import com.karpuk.account.emulator.test.client.TestApplicationClient;
+import com.karpuk.account.emulator.test.model.TestAppHealth;
 import com.karpuk.account.emulator.test.model.TestDbAccount;
 import com.karpuk.account.emulator.test.model.TestDbTransaction;
 import com.karpuk.account.emulator.test.utils.TestAccountMapper;
@@ -13,6 +14,7 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +53,13 @@ public class HttpRequestTest {
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
                 .withBody(getBodyForCurrencyStub())));
+    }
+
+    @Test
+    public void applicationHealthTest() {
+        ResponseEntity<TestAppHealth> response = testClient.getAppHealth();
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
+        assertThat(response.getBody().getStatus()).as("Verify application health status").isEqualTo(Status.UP);
     }
 
     @Test
