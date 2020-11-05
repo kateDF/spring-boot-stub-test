@@ -1,18 +1,14 @@
 package com.karpuk.account.emulator.test.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class TestAppInfo {
 
     private String version;
-
-    public TestAppInfo() {
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
 
 }
