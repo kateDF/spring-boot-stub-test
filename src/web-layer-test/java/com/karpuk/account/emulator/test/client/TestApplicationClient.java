@@ -7,17 +7,19 @@ import com.karpuk.account.emulator.test.model.TestAppHealth;
 import com.karpuk.account.emulator.test.model.TestAppInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.TestComponent;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
 
 import java.net.URI;
 import java.util.List;
 
-@Service
+@TestComponent
+@Lazy //@Lazy annotation required due to ${local.server.port} property injection process
 public class TestApplicationClient {
 
     @Value("${test.endpoints.actuator.health}")

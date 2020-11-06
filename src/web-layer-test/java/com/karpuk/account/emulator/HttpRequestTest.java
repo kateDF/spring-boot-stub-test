@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
@@ -32,10 +33,11 @@ import static com.karpuk.account.emulator.test.utils.TestDataUtils.getRandomName
 import static com.karpuk.account.emulator.test.utils.TestDataUtils.getRandomTransactionValue;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, classes = SpringBootAppLauncher.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = SpringBootAppLauncher.class)
 @AutoConfigureWireMock(port = 8090)
 @ActiveProfiles("test-stub")
 @TestPropertySource(locations = "/test-stub.properties")
+@ComponentScan("com.karpuk.account.emulator.test")
 public class HttpRequestTest {
 
     private static final double EUR_RATE = 0.8467400508;
