@@ -63,14 +63,14 @@ public class HttpRequestTest {
     }
 
     @Test
-    public void applicationHealthTest() {
+    public void testApplicationHealth() {
         ResponseEntity<TestAppHealth> response = testClient.getAppHealth();
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getStatus()).as("Verify application health status").isEqualTo(Status.UP);
     }
 
     @Test
-    public void applicationVersionTest() {
+    public void testApplicationVersion() {
         ResponseEntity<TestAppInfo> response = testClient.getAppInfo();
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(response.getBody().getVersion()).as("Verify application version").isEqualTo("1.0-SNAPSHOT");
@@ -144,7 +144,7 @@ public class HttpRequestTest {
     }
 
     @Test
-    public void successDeleteAccount() {
+    public void testSuccessDeleteAccount() {
         ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(),
                 EUR_RATE);
         ResponseEntity<ApiAccount> response = testClient.deleteAccount(originalApiAccount.getId());
