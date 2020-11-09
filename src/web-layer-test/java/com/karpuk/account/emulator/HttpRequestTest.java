@@ -1,6 +1,5 @@
 package com.karpuk.account.emulator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
@@ -14,6 +13,8 @@ import com.karpuk.account.emulator.test.utils.TestAccountMapper;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -23,8 +24,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -41,7 +43,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class HttpRequestTest {
 
     private static final double EUR_RATE = 0.8467400508;
-    private static final String EXCHANGE_RATE_RESPONSE_TEMPLATE = "src/web-layer-test/resources/rate-response.json";
+    private static final String EXCHANGE_RATE_TEMPLATE = "src/web-layer-test/resources/json/rate-response.json";
+    private static final String EXCHANGE_RATE_PARAMETERIZED_TEMPLATE = "src/web-layer-test/resources/json" +
+            "/rate-response-parameterized.json";
 
     @Autowired
     private TestApplicationClient testClient;
@@ -55,7 +59,7 @@ public class HttpRequestTest {
         stubFor(get(urlEqualTo("/latest?base=USD")).willReturn(aResponse()
                 .withStatus(200)
                 .withHeader("Content-Type", "application/json")
-                .withBody(getBodyForCurrencyStub())));
+                .withBody(getBodyForCurrencyStub(EXCHANGE_RATE_TEMPLATE))));
     }
 
     @Test
@@ -148,10 +152,29 @@ public class HttpRequestTest {
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
     }
 
-    private String getBodyForCurrencyStub() {
-        ObjectMapper objectMapper = new ObjectMapper();
+    @ParameterizedTest()
+    @ValueSource(doubles = {0.0, 0.01, 0.99, 1, 999999.9})
+    public void testGetBalanceWithDifferentRates(Double eurExchangeRate) {
+        stubFor(get(urlEqualTo("/latest?base=USD")).willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "application/json")
+                .withBody(getBodyForCurrencyStub(EXCHANGE_RATE_PARAMETERIZED_TEMPLATE).replace("${eur_rate}",
+                        eurExchangeRate.toString()))));
+        ApiAccount originalApiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(),
+                eurExchangeRate);
+        ApiBalance expectedBalance = originalApiAccount.getBalance();
+
+        ResponseEntity<ApiAccount> response = testClient.getAccountById(originalApiAccount.getId());
+        ApiBalance actualBalance = response.getBody().getBalance();
+
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
+        assertThat(actualBalance.getUsdBalance()).as("Verify usd balance").isEqualTo(expectedBalance.getUsdBalance());
+        assertThat(actualBalance.getEuroBalance()).as("Verify euro balance").isEqualTo(expectedBalance.getEuroBalance());
+    }
+
+    private String getBodyForCurrencyStub(String filePath) {
         try {
-            return objectMapper.readTree(new File(EXCHANGE_RATE_RESPONSE_TEMPLATE)).toString();
+            return Files.readString(Paths.get(filePath));
         } catch (IOException e) {
             throw new RuntimeException("Could not prepare stub", e);
         }

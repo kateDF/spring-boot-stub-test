@@ -7,6 +7,7 @@ import com.karpuk.account.emulator.db.model.DbAccount;
 import com.karpuk.account.emulator.db.model.DbTransaction;
 import org.springframework.stereotype.Service;
 
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ public class AccountMapper {
         apiAccount.setFullName(dbAccount.getFullName());
         apiAccount.setRegistrationDate(dbAccount.getRegistrationDate());
         double usdAmount = calculateBalance(dbAccount.getTransactions());
-        apiAccount.setBalance(new ApiBalance(usdAmount, usdAmount * euroExchangeRate));
+        apiAccount.setBalance(new ApiBalance(usdAmount, getFormattedEuroBalance(usdAmount * euroExchangeRate)));
         apiAccount.setTransactions(mapToApiTransactions(dbAccount.getTransactions()));
         return apiAccount;
     }
@@ -74,6 +75,11 @@ public class AccountMapper {
                 .filter(Objects::nonNull)
                 .map(DbTransaction::getAmount)
                 .collect(Collectors.summingDouble(Double::doubleValue));
+    }
+
+    private double getFormattedEuroBalance(double eurBalance) {
+        DecimalFormat df = new DecimalFormat("#.##");
+        return Double.valueOf(df.format(eurBalance));
     }
 
 }

@@ -1,0 +1,7 @@
+{
+  "rates": {
+    "EUR": "${eur_rate}"
+  },
+  "base": "USD",
+  "date": "2020-10-20"
+}
