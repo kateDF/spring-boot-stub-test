@@ -3,6 +3,7 @@ package com.karpuk.account.emulator.test.client;
 import com.karpuk.account.emulator.api.model.ApiAccount;
 import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
+import com.karpuk.account.emulator.test.model.TestApiError;
 import com.karpuk.account.emulator.test.model.TestAppHealth;
 import com.karpuk.account.emulator.test.model.TestAppInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,9 @@ import java.util.List;
 @TestComponent
 @Lazy //@Lazy annotation required due to ${local.server.port} property injection process
 public class TestApplicationClient {
+
+    @Value("${test.base.url}")
+    private String baseUrl;
 
     @Value("${test.endpoints.actuator.health}")
     private String appHealthEndpoint;
@@ -76,6 +80,14 @@ public class TestApplicationClient {
         RequestEntity<ApiAccount> requestEntity = new RequestEntity<>(HttpMethod.DELETE,
                 URI.create(exactAccountEndpoint.replace("{accountId}", id)));
         return restTemplate.exchange(requestEntity, ApiAccount.class);
+    }
+
+    public ResponseEntity<TestApiError> getAccountByIdError(String id) {
+        return restTemplate.getForEntity(exactAccountEndpoint.replace("{accountId}", id), TestApiError.class);
+    }
+
+    public ResponseEntity<TestApiError> getInvalidEndpoint() {
+        return restTemplate.getForEntity(baseUrl + "/invalidPath", TestApiError.class);
     }
 
 }
