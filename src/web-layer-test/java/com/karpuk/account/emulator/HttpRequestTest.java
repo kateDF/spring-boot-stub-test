@@ -5,10 +5,7 @@ import com.karpuk.account.emulator.api.model.ApiBalance;
 import com.karpuk.account.emulator.api.model.ApiTransaction;
 import com.karpuk.account.emulator.test.client.MongoDbClient;
 import com.karpuk.account.emulator.test.client.TestApplicationClient;
-import com.karpuk.account.emulator.test.model.TestAppHealth;
-import com.karpuk.account.emulator.test.model.TestAppInfo;
-import com.karpuk.account.emulator.test.model.TestDbAccount;
-import com.karpuk.account.emulator.test.model.TestDbTransaction;
+import com.karpuk.account.emulator.test.model.*;
 import com.karpuk.account.emulator.test.utils.TestAccountMapper;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -170,6 +167,25 @@ public class HttpRequestTest {
         assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(200);
         assertThat(actualBalance.getUsdBalance()).as("Verify usd balance").isEqualTo(expectedBalance.getUsdBalance());
         assertThat(actualBalance.getEuroBalance()).as("Verify euro balance").isEqualTo(expectedBalance.getEuroBalance());
+    }
+
+    @Test
+    public void testExchangeRateServiceFailure() {
+        stubFor(get(urlEqualTo("/latest?base=USD")).willReturn(aResponse()
+                .withStatus(500)));
+        ApiAccount apiAccount = testAccountMapper.mapToApiAccount(mongoDbClient.createRandomAccountInDb(), EUR_RATE);
+        ResponseEntity<TestApiError> response = testClient.getAccountByIdError(apiAccount.getId());
+
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(500);
+        assertThat(response.getBody().getError()).as("Verify error").isEqualTo("Internal Server Error");
+    }
+
+    @Test
+    public void testGetInvalidPath() {
+        ResponseEntity<TestApiError> response = testClient.getInvalidEndpoint();
+
+        assertThat(response.getStatusCodeValue()).as("Verify status code").isEqualTo(404);
+        assertThat(response.getBody().getError()).as("Verify error").isEqualTo("Not Found");
     }
 
     private String getBodyForCurrencyStub(String filePath) {
